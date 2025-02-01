@@ -18,7 +18,7 @@ void func(int sockfd)
     // Clear buffer before sending the message
     bzero(buff, sizeof(buff));
 
-    printf("Input lowercase sentence: ");
+    printf("Enter string: ");
     fgets(buff, sizeof(buff), stdin);  // Take input from user
 
     // Send message to server
