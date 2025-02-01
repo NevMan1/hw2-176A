@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
         if (valid_input) {
             snprintf(data_buffer, sizeof(data_buffer), "%d", digit_sum); // Convert sum to string
             strcat(result_buffer, data_buffer); // Add to result
-            strcat(result_buffer, "!"); // Append 'a'
+            strcat(result_buffer, "f"); // Append 'a'
 
             // Continue summing digits until single digit result is obtained
             while (digit_sum >= 10) {
