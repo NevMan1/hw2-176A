@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
                 bzero(data_buffer, 256);
                 snprintf(data_buffer, sizeof(data_buffer), "%d", digit_sum);
                 strcat(result_buffer, data_buffer); // Append sum to result
-                strcat(result_buffer, "!"); // Append the seperatros.
+                strcat(result_buffer, "f"); // Append the seperatros.
             }
 
             // Send the result back to the client
