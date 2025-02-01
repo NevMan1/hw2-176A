@@ -1,84 +1,97 @@
-#include <arpa/inet.h> // inet_addr()
-#include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
-#include <strings.h> // bzero()
+#include <sys/types.h>
 #include <sys/socket.h>
-#include <unistd.h> // read(), write(), close()
+#include <netinet/in.h>
+#include <netdb.h>
 
-#define MAX 80
-#define SA struct sockaddr
-
-// Function designed for communication between client and server
-void func(int sockfd)
+void report_error(const char *msg)
 {
-    char buff[MAX];
-
-    // Clear buffer before sending the message
-    bzero(buff, sizeof(buff));
-
-    printf("Enter string: ");
-    fgets(buff, sizeof(buff), stdin);  // Take input from user
-
-    // Send message to server
-    write(sockfd, buff, strlen(buff)); // Send only the actual message length
-
-    // Clear buffer before receiving the response
-    bzero(buff, sizeof(buff));
-
-    // Read response from server
-    read(sockfd, buff, sizeof(buff));
-
-    // Print the server response
-    printf("From Server: %s", buff);
+    perror(msg);
+    exit(0);
 }
 
 int main(int argc, char *argv[])
 {
-    int sockfd; // Declare only sockfd since that's the only socket needed
-    struct sockaddr_in servaddr;
+    int client_socket, server_port, bytes_sent;
+    struct sockaddr_in server_addr;
+    struct hostent *remote_server;
 
-    // Check for valid input arguments
+    // open the socket and establish connection
+    char input_buffer[256];
     if (argc < 3) {
-        printf("Usage: %s <server-ip> <port>\n", argv[0]);
+        fprintf(stderr, "usage %s hostname port\n", argv[0]);
         exit(0);
     }
-
-    // Create socket and check for errors
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd == -1) {
-        printf("Socket creation failed...\n");
+    
+    server_port = atoi(argv[2]);
+    client_socket = socket(AF_INET, SOCK_STREAM, 0);
+    if (client_socket < 0)
+        report_error("ERROR opening socket");
+    
+    remote_server = gethostbyname(argv[1]);
+    if (remote_server == NULL) {
+        fprintf(stderr, "ERROR, no such host\n");
         exit(0);
-    } 
+    }
+    
+    bzero((char *) &server_addr, sizeof(server_addr));
+    server_addr.sin_family = AF_INET;
+    bcopy((char *)remote_server->h_addr, 
+         (char *)&server_addr.sin_addr.s_addr,
+         remote_server->h_length);
+    server_addr.sin_port = htons(server_port);
 
-    bzero(&servaddr, sizeof(servaddr));
+    // Try to connect to the server
+    if (connect(client_socket, (struct sockaddr *) &server_addr, sizeof(server_addr)) < 0)
+        report_error("ERROR connecting");
 
-    // Parse server IP and port number from command line arguments
-    char *server_ip = argv[1];
-    int port = atoi(argv[2]);
+    // Get the input from the user
+    printf("Enter string: ");
+    bzero(input_buffer, 256);
+    fgets(input_buffer, 255, stdin);
 
-    // Assign IP and PORT to the server address
-    servaddr.sin_family = AF_INET;
-    servaddr.sin_port = htons(port);
+    // Send user message to the server
+    bytes_sent = write(client_socket, input_buffer, strlen(input_buffer));
+    if (bytes_sent < 0)
+        report_error("ERROR writing to socket");
 
-    // Convert the server IP from string to binary form
-    if (inet_pton(AF_INET, server_ip, &servaddr.sin_addr) <= 0) {
-        perror("Invalid address/Address not supported");
-        exit(EXIT_FAILURE);
+    bzero(input_buffer, 256);
+
+    // Read server response 
+    bytes_sent = read(client_socket, input_buffer, 255);
+    if (bytes_sent < 0)
+        report_error("ERROR reading from socket");
+
+    // See if the  server ran into any errors
+    if (strcmp(input_buffer, "Sorry, cannot compute!") == 0) {
+        printf("From server: Sorry, cannot compute!\n");
+        close(client_socket);
+        return 0;
     }
 
-    // Connect to the server
-    if (connect(sockfd, (SA*)&servaddr, sizeof(servaddr)) != 0) {
-        printf("Connection with the server failed...\n");
-        exit(0);
-    } 
+    // The server responds with numbers separated by '!' This will work as a seperator
+    int substring_start = -1;
+    for (int i = 0; input_buffer[i] != '\0'; i++) {
+        if (input_buffer[i] == '!') {
+            if (substring_start != -1) {
+                printf("From server: ");
+                for (int j = substring_start; j < i; j++) {
+                    printf("%c", input_buffer[j]);
+                }
+                printf("\n");
+            }
+            substring_start = -1;
+        } else {
+            if (substring_start == -1) {
+                substring_start = i;
+            }
+        }
+    }
 
-    // Function to send and receive messages
-    func(sockfd);
-
-    // Close the socket
-    close(sockfd);
-
+    // Close the  socket
+    close(client_socket);
     return 0;
 }
