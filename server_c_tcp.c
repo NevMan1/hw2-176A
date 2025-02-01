@@ -1,3 +1,6 @@
+// I got inspiration from https://www.geeksforgeeks.org/tcp-server-client-implementation-in-c/
+// Implemented a lot of the  principals that they used
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -112,7 +115,7 @@ int main(int argc, char *argv[])
             bzero(result_buffer, 256); // Clear the result buffer
         } else {
             // If not valid input, send error message
-            read_bytes = write(client_fd, "Sorry, cannot compute!", 23);
+            read_bytes = write(client_fd, "Sorry, cannot compute!\n", 23);
             if (read_bytes < 0) {
                 handle_error("ERROR writing to socket");
             }
