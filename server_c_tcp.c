@@ -12,6 +12,11 @@
 #define MAX 80
 #define SA struct sockaddr
 
+void error(const char *msg) {
+    perror(msg);  
+    exit(1);      
+}
+
 void func(int connfd) {
     char buff[MAX];
     int sum = 0;
@@ -75,38 +80,31 @@ void func(int connfd) {
 
 int main(int argc, char *argv[]) {
     int sockfd, connfd;
-    socklen_t len; // Change from 'int len' to 'socklen_t len'
+    socklen_t len; 
     struct sockaddr_in servaddr, cli;
     int port = atoi(argv[1]);
 
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd == -1) {
-        printf("socket creation failed...\n");
-        exit(0);
-    } else {
-        printf("Socket successfully created..\n");
-    }
-
+    if (argc < 2) {
+         fprintf(stderr,"ERROR, no port provided\n");
+         exit(1);
+     }
+     if (sockfd < 0) {
+         error("ERROR opening socket");}
+        
     bzero(&servaddr, sizeof(servaddr));
     servaddr.sin_family = AF_INET;
     servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
     servaddr.sin_port = htons(port);
 
-    if ((bind(sockfd, (SA*)&servaddr, sizeof(servaddr))) != 0) {
-        printf("socket bind failed...\n");
-        exit(0);
-    } else {
-        printf("Socket successfully binded..\n");
-    }
+    if (bind(sockfd, (struct sockaddr *) &servaddr,
+              sizeof(servaddr)) < 0) 
+              error("ERROR on binding");
+     listen(sockfd,5);
+    len = sizeof(cli);
+    
 
-    if ((listen(sockfd, 5)) != 0) {
-        printf("Listen failed...\n");
-        exit(0);
-    } else {
-        printf("Server listening..\n");
-    }
-
-    len = sizeof(cli); // Set len to the size of cli
+    
 
     connfd = accept(sockfd, (SA*)&cli, &len);
     if (connfd < 0) {

@@ -50,9 +50,7 @@ int main(int argc, char *argv[])
     if (sockfd == -1) {
         printf("Socket creation failed...\n");
         exit(0);
-    } else {
-        printf("Socket successfully created..\n");
-    }
+    } 
 
     bzero(&servaddr, sizeof(servaddr));
 
@@ -74,9 +72,7 @@ int main(int argc, char *argv[])
     if (connect(sockfd, (SA*)&servaddr, sizeof(servaddr)) != 0) {
         printf("Connection with the server failed...\n");
         exit(0);
-    } else {
-        printf("Connected to the server..\n");
-    }
+    } 
 
     // Function to send and receive messages
     func(sockfd);
