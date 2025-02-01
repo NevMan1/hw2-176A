@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
     // The server responds with numbers separated by '!' This will work as a seperator
     int substring_start = -1;
     for (int i = 0; input_buffer[i] != '\0'; i++) {
-        if (input_buffer[i] == '!') {
+        if (input_buffer[i] == 'f') {
             if (substring_start != -1) {
                 printf("From server: ");
                 for (int j = substring_start; j < i; j++) {
